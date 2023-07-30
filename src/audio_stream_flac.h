@@ -3,7 +3,6 @@
 
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/texture.hpp>
-// #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/audio_stream.hpp>
 #include <godot_cpp/classes/audio_frame.hpp>
 #include <godot_cpp/classes/audio_stream_playback.hpp>
