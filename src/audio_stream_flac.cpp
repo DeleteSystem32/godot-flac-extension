@@ -24,15 +24,12 @@ int32_t AudioStreamPlaybackFLAC::_mix_resampled(AudioFrame *p_buffer, int p_fram
 	}
 	
 	while (todo && active) {
-		float* pSamples = (float*)memalloc(todo * pFlac->channels * sizeof(float));
 		float *buffer = (float *)p_buffer;
 		if (start_buffer > 0) {
 			buffer = (buffer + start_buffer * 2);
 		}
-		int mixed = drflac_read_pcm_frames_f32(pFlac, todo, pSamples);
-		for(int i = 0; i<mixed; i++){
-			buffer[i * 2] = pSamples[i * flac_stream->channels];
-			buffer[i*2 + 1] = pSamples[i * flac_stream->channels + flac_stream->channels-1];
+		int mixed = drflac_read_pcm_frames_f32(pFlac, todo, buffer);
+		for(int i = 0; i < mixed; i++){
 
 			if (loop_fade_remaining < FADE_SIZE) {
 				p_buffer[p_frames - todo].left += loop_fade[loop_fade_remaining].left * (float(FADE_SIZE - loop_fade_remaining) / float(FADE_SIZE));
@@ -44,14 +41,10 @@ int32_t AudioStreamPlaybackFLAC::_mix_resampled(AudioFrame *p_buffer, int p_fram
 			++frames_mixed;
 
 			if (beat_loop && (int)frames_mixed >= beat_length_frames) {
-				float* pSamples2 = (float*)memalloc(FADE_SIZE * pFlac->channels * sizeof(float));
-				int samples_mixed = drflac_read_pcm_frames_f32(pFlac, FADE_SIZE, pSamples2);
-				for (int i = 0; i < samples_mixed; i++) {
-					loop_fade[i].left = pSamples2[i * flac_stream->channels];
-					loop_fade[i].right = pSamples2[i * flac_stream->channels + flac_stream->channels-1];
-					
+				for (int fade_i = 0; fade_i < FADE_SIZE; fade_i++) {
+					p_buffer[fade_i].left = buffer[fade_i * flac_stream->channels];
+					p_buffer[fade_i].right =buffer[fade_i * flac_stream->channels + flac_stream->channels - 1];
 				}
-				memfree(pSamples2);
 				loop_fade_remaining = 0;
 				_seek(flac_stream->loop_offset);
 				loops++;
@@ -77,7 +70,6 @@ int32_t AudioStreamPlaybackFLAC::_mix_resampled(AudioFrame *p_buffer, int p_fram
 				todo = 0;
 			}
 		}
-		memfree(pSamples);
 	}
 
 	return frames_mixed_this_step;
